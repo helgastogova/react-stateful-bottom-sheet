@@ -1,18 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import cx from "classnames";
 import { motion, PanInfo, useMotionValue } from "framer-motion";
 import useDetectKeyboardOpen from "use-detect-keyboard-open";
+import { useClickOutside } from "./useClickOutside"; 
 
-// import s from './styles.module.css';
+import s from "./styles.module.css";
 
 type BottomSheetProps = {
   children?:
     | React.ReactNode
-    | (({ isOpen, setOpen }: { isOpen: boolean; setOpen: (isOpen: boolean) => void }) => React.JSX.Element);
+    | (({ isOpen, setOpen }: { isOpen: boolean; setOpen: (isOpen: boolean) => void }) => JSX.Element);
   className?: string;
   autoHeight?: boolean;
   compactHeight?: string;
   fullHeight?: string;
+  onClickOutside?: () => void;
+  closeOnClickOutside?: boolean;
 };
 
 export const BottomSheet: React.FC<React.PropsWithChildren<BottomSheetProps>> = ({
@@ -20,10 +23,18 @@ export const BottomSheet: React.FC<React.PropsWithChildren<BottomSheetProps>> = 
   className,
   compactHeight = "20vh",
   fullHeight = "90vh",
+  onClickOutside,
+  closeOnClickOutside = true,
 }) => {
+  const componentRef = useRef<HTMLDivElement | null>(null); 
   const [height, setHeight] = useState<string>(compactHeight);
   const [isOpen, setOpen] = useState<boolean>(false);
   const y = useMotionValue(0);
+
+  useClickOutside([componentRef], () => {
+    onClickOutside?.();
+    closeOnClickOutside && setOpen(false);
+  });
 
   const isKeyboardOpen = useDetectKeyboardOpen();
 
@@ -39,7 +50,7 @@ export const BottomSheet: React.FC<React.PropsWithChildren<BottomSheetProps>> = 
   return (
     <motion.div
       drag="y"
-      // className={cx(s.root, className, isKeyboardOpen && s.keyboardOpen)}
+      className={cx(s.root, className, isKeyboardOpen && s.keyboardOpen)}
       style={{
         height: height,
         y,
@@ -51,4 +62,3 @@ export const BottomSheet: React.FC<React.PropsWithChildren<BottomSheetProps>> = 
     </motion.div>
   );
 };
-
