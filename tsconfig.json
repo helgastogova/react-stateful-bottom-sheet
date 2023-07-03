@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    // Existing options...
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    // "css-modules": true,
+    "declaration": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false,
+    "jsx": "react",
+    "outDir": "dist",
+    "lib": ["dom", "dom.iterable", "es2015"],
+    "baseUrl": "./",
+    "paths": {
+      "*": ["src/*"]
+    },
+  },
+  "include": ["src"]
+}

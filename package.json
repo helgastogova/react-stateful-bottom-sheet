@@ -1,0 +1,45 @@
+{
+  "name": "react-stateful-bottom-sheet",
+  "version": "1.0.0",
+  "description": "React Stateful Bottom Sheet is a versatile React component that provides a bottom sheet functionality with the ability to pass the open/closed state to its child components.",
+  "keywords": [
+    "react",
+    "post",
+    "wrapper",
+    "clickable",
+    "clickable post wrapper"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/helgastogova/react-stateful-bottom-sheet"
+  },
+  "author": "Olga Stogova <helgastogova@gmail.com>",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "*.d.ts",
+    "*.js"
+  ],
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "framer-motion": "^4.0.0",
+    "classnames": "^2.2.6",
+    "use-detect-keyboard-open": "0.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.14",
+    "prettier": "2.8.8",
+    "rimraf": "^5.0.1",
+    "typescript": "^5.1.5"
+  }
+}
