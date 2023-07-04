@@ -5,7 +5,7 @@
   left: 0;
   z-index: 100;
   width: 100%;
-  padding: 24px 16px env(safe-area-inset-bottom, 24px) 16px;
+  padding: 10px 16px env(safe-area-inset-bottom, 24px) 16px;
   background-color: white;
   border-radius: 12px 12px 0 0;
   box-shadow: 0 0 10px rgb(0 0 0 / 0.2);
@@ -47,6 +47,12 @@
 
   &::-webkit-scrollbar {
     display: none;
+    width: 0;
+    background: transparent; 
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: transparent;
   }
 }
 
