@@ -14,5 +14,5 @@ type BottomSheetProps = {
     onClickOutside?: () => void;
     closeOnClickOutside?: boolean;
 };
-export declare const BottomSheet: React.FC<React.PropsWithChildren<BottomSheetProps>>;
+export declare const BottomSheet: React.FC<BottomSheetProps>;
 export {};
