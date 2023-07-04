@@ -1,11 +1,15 @@
 {
   "name": "react-stateful-bottom-sheet",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "React Stateful Bottom Sheet is a versatile React component that provides a bottom sheet functionality with the ability to pass the open/closed state to its child components.",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup -c",
     "lint": "eslint './{src,app}/**/*.{ts,tsx}'",
-    "size": "size-limit"
+    "size": "size-limit",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -22,6 +26,11 @@
     "url": "https://github.com/helgastogova/react-stateful-bottom-sheet/issues"
   },
   "homepage": "https://github.com/helgastogova/react-stateful-bottom-sheet#readme",
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^4.9.5"
+  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.2",
     "@rollup/plugin-node-resolve": "^15.1.0",
@@ -37,7 +46,6 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.29.4",
     "identity-obj-proxy": "^3.0.0",
-    "install": "^0.13.0",
     "npm": "^9.7.2",
     "postcss": "^8.4.13",
     "prettier": "^2.6.2",
@@ -52,15 +60,6 @@
     "rollup-plugin-terser": "^7.0.2",
     "size-limit": "^5.0.1",
     "typescript": "^4.9.5"
-  },
-  "config": {
-    "lib": {
-      "peerDependencies": {
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
-        "typescript": "^4.9.5"
-      }
-    }
   },
   "dependencies": {
     "classnames": "^2.3.2",

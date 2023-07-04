@@ -51,9 +51,6 @@ devDependencies:
   identity-obj-proxy:
     specifier: ^3.0.0
     version: 3.0.0
-  install:
-    specifier: ^0.13.0
-    version: 0.13.0
   npm:
     specifier: ^9.7.2
     version: 9.7.2
@@ -2753,11 +2750,6 @@ packages:
 
   /inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
-    dev: true
-
-  /install@0.13.0:
-    resolution: {integrity: sha512-zDml/jzr2PKU9I8J/xyZBQn8rPCAY//UOYNmR01XwNwyfhEWObo2SWfSl1+0tm1u6PhxLwDnfsT/6jB7OUxqFA==}
-    engines: {node: '>= 0.10'}
     dev: true
 
   /internal-slot@1.0.5:
