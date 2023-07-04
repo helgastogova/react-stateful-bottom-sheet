@@ -8992,8 +8992,8 @@ function styleInject(css, ref) {
   }
 }
 
-var css_248z = ".styles-module_root__Xsw1F {\n  position: fixed;\n  box-sizing: border-box;\n  bottom: 0;\n  left: 0;\n  z-index: 100;\n  width: 100%;\n  padding: 24px 16px env(safe-area-inset-bottom, 24px) 16px;\n  background-color: white;\n  border-radius: 12px 12px 0 0;\n  box-shadow: 0 0 10px rgb(0 0 0 / 0.2);\n\n  &:after {\n    position: absolute;\n    right: 0;\n    bottom: -100px;\n    left: 0;\n    z-index: 99;\n    width: 100%;\n    height: 100px;\n    margin: auto;\n    background: white;\n    content: \"\";\n  }\n}\n\n.styles-module_line__Xgaua {\n  height: 16px;\n\n  &:before {\n    position: absolute;\n    top: 12px;\n    right: 0;\n    left: 0;\n    z-index: 101;\n    width: 46px;\n    height: 4px;\n    margin: auto;\n    background: #d1d4db;\n    border-radius: 2px;\n    content: \"\";\n  }\n}\n\n.styles-module_content__IZ0A3 {\n  display: block;\n  overflow-y: scroll;\n  flex-grow: 1;\n\n  &::-webkit-scrollbar {\n    display: none;\n  }\n}\n\n.styles-module_wrapper__RK3i- {\n  display: flex;\n  flex-direction: column;\n  max-height: 100%;\n  box-sizing: border-box;\n  padding: 0 0 env(safe-area-inset-bottom, 24px) 0;\n}\n";
-var s = {"root":"styles-module_root__Xsw1F","line":"styles-module_line__Xgaua","content":"styles-module_content__IZ0A3","wrapper":"styles-module_wrapper__RK3i-"};
+var css_248z = ".styles-module_root__Xsw1F {\n  position: fixed;\n  box-sizing: border-box;\n  bottom: 0;\n  left: 0;\n  z-index: 100;\n  width: 100%;\n  padding: 24px 16px env(safe-area-inset-bottom, 24px) 16px;\n  background-color: white;\n  border-radius: 12px 12px 0 0;\n  box-shadow: 0 0 10px rgb(0 0 0 / 0.2);\n\n  &:after {\n    position: absolute;\n    right: 0;\n    bottom: -100px;\n    left: 0;\n    z-index: 99;\n    width: 100%;\n    height: 100px;\n    margin: auto;\n    background: white;\n    content: \"\";\n  }\n}\n\n.styles-module_line__Xgaua {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  height: 16px;\n  position: relative;\n}\n\n.styles-module_innerLine__9uNv0 {\n  z-index: 101;\n  width: 46px;\n  height: 4px;\n  background: #d1d4db;\n  border-radius: 2px;\n}\n\n.styles-module_content__IZ0A3 {\n  display: block;\n  overflow-y: scroll;\n  flex-grow: 1;\n\n  &::-webkit-scrollbar {\n    display: none;\n  }\n}\n\n.styles-module_wrapper__RK3i- {\n  display: flex;\n  flex-direction: column;\n  max-height: 100%;\n  box-sizing: border-box;\n  padding: 0 0 env(safe-area-inset-bottom, 24px) 0;\n}\n";
+var s = {"root":"styles-module_root__Xsw1F","line":"styles-module_line__Xgaua","innerLine":"styles-module_innerLine__9uNv0","content":"styles-module_content__IZ0A3","wrapper":"styles-module_wrapper__RK3i-"};
 styleInject(css_248z);
 
 const BottomSheet = ({ children, rootClassName, wrapperClassName, lineClassName, contentClassName, compactHeight = "auto", fullHeight = "90vh", onClickOutside, closeOnClickOutside = true }) => {
@@ -9025,7 +9025,8 @@ const BottomSheet = ({ children, rootClassName, wrapperClassName, lineClassName,
             y
         }, dragConstraints: { top: 0, bottom: 0 }, onDragEnd: handleDragEnd, ref: componentRef },
         React.createElement("div", { className: cx(s.wrapper, wrapperClassName) },
-            React.createElement("div", { className: cx(s.line, lineClassName) }),
+            React.createElement("div", { className: s.line },
+                React.createElement("div", { className: cx(s.innerLine, lineClassName) })),
             React.createElement("div", { className: cx(s.content, contentClassName) }, Children))));
 };
 

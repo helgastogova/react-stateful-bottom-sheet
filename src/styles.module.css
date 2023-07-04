@@ -25,21 +25,19 @@
 }
 
 .line {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: 16px;
+  position: relative;
+}
 
-  &:before {
-    position: absolute;
-    top: 12px;
-    right: 0;
-    left: 0;
-    z-index: 101;
-    width: 46px;
-    height: 4px;
-    margin: auto;
-    background: #d1d4db;
-    border-radius: 2px;
-    content: "";
-  }
+.innerLine {
+  z-index: 101;
+  width: 46px;
+  height: 4px;
+  background: #d1d4db;
+  border-radius: 2px;
 }
 
 .content {

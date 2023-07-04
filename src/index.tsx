@@ -79,7 +79,9 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       ref={componentRef}
     >
       <div className={cx(s.wrapper, wrapperClassName)}>
-        <div className={cx(s.line, lineClassName)} />
+        <div className={s.line}>
+          <div className={cx(s.innerLine, lineClassName)}></div>
+        </div>
         <div className={cx(s.content, contentClassName)}>{Children}</div>
       </div>
     </motion.div>
