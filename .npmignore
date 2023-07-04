@@ -1,0 +1,13 @@
+tests/
+.vscode/
+.idea/
+.eslintrc.js
+.prettierrc.js
+jest.config.js
+rollup.config.js
+.npmrc
+.env
+yarn.lock
+package-lock.json
+doc/
+src/

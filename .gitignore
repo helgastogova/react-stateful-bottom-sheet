@@ -1,1 +1,16 @@
+# .gitignore
 node_modules
+dist
+*.log
+*.lock
+*.pid
+*.seed
+*.swp
+*.swo
+*.bak
+*.tmp
+.DS_Store
+.directory
+.idea
+.vscode
+Thumbs.db
