@@ -1,5 +1,8 @@
 # React Stateful Bottom Sheet
 
+
+https://github.com/helgastogova/react-stateful-bottom-sheet/assets/3423341/2c778317-4618-47c8-82ef-234741a7b86d
+
 React Stateful Bottom Sheet is a versatile npm package that provides a stateful bottom sheet component for your React applications. It fits easily into your project, enhancing user interaction and responsiveness.
 
 ## Features
