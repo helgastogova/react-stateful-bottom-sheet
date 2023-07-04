@@ -1,5 +1,6 @@
 .root {
   position: fixed;
+  box-sizing: border-box;
   bottom: 0;
   left: 0;
   z-index: 100;
@@ -9,26 +10,7 @@
   border-radius: 12px 12px 0 0;
   box-shadow: 0 0 10px rgb(0 0 0 / 0.2);
 
-  &:before {
-    position: absolute;
-    top: 12px;
-    right: 0;
-    left: 0;
-    z-index: 101;
-    width: 46px;
-    height: 6px;
-    margin: auto;
-    background: #d1d4db;
-    border-radius: 2px;
-    content: "";
-
-    &:hover,
-    &:active {
-      background: #9096a2;
-    }
-  }
-
-  &::after {
+  &:after {
     position: absolute;
     right: 0;
     bottom: -100px;
@@ -40,4 +22,40 @@
     background: white;
     content: "";
   }
+}
+
+.line {
+  height: 16px;
+
+  &:before {
+    position: absolute;
+    top: 12px;
+    right: 0;
+    left: 0;
+    z-index: 101;
+    width: 46px;
+    height: 4px;
+    margin: auto;
+    background: #d1d4db;
+    border-radius: 2px;
+    content: "";
+  }
+}
+
+.content {
+  display: block;
+  overflow-y: scroll;
+  flex-grow: 1;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  box-sizing: border-box;
+  padding: 0 0 env(safe-area-inset-bottom, 24px) 0;
 }

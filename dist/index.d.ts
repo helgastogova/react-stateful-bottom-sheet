@@ -1,11 +1,14 @@
-import React from "react";
+import React, { ReactNode } from "react";
+type BottomSheetChildProps = {
+    isOpen: boolean;
+    setOpen: (isOpen: boolean) => void;
+};
 type BottomSheetProps = {
-    children?: React.ReactNode | (({ isOpen, setOpen }: {
-        isOpen: boolean;
-        setOpen: (isOpen: boolean) => void;
-    }) => JSX.Element);
-    className?: string;
-    autoHeight?: boolean;
+    children?: ReactNode | ((props: BottomSheetChildProps) => ReactNode);
+    rootClassName?: string;
+    wrapperClassName?: string;
+    lineClassName?: string;
+    contentClassName?: string;
     compactHeight?: string;
     fullHeight?: string;
     onClickOutside?: () => void;

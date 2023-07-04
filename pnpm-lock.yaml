@@ -7,9 +7,6 @@ dependencies:
   framer-motion:
     specifier: ^10.12.18
     version: 10.12.18(react-dom@18.2.0)(react@18.2.0)
-  use-detect-keyboard-open:
-    specifier: ^0.4.0
-    version: 0.4.0
 
 devDependencies:
   '@rollup/plugin-commonjs':
@@ -5480,10 +5477,6 @@ packages:
       punycode: 1.4.1
       qs: 6.11.2
     dev: true
-
-  /use-detect-keyboard-open@0.4.0:
-    resolution: {integrity: sha512-g26dzEDF9qh1VSwYT7ILOdzS0v9xPo5IF3R804HksW+NAOiNd2P2KYrmTfd/5ApfYixlrX2P7+PlsEgAx/lZ6w==}
-    dev: false
 
   /use@3.1.1:
     resolution: {integrity: sha512-cwESVXlO3url9YWlFW/TA9cshCEhtu7IKJ/p5soJ/gGpj7vbvFrAY/eIioQ6Dw23KjZhYgiIo8HOs1nQ2vr/oQ==}

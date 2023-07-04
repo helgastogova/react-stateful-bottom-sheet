@@ -1,64 +1,88 @@
-import React, { useState, useRef } from "react";
+import React, { ReactNode, useState, useRef, useEffect } from "react";
 import cx from "classnames";
 import { motion, PanInfo, useMotionValue } from "framer-motion";
-import useDetectKeyboardOpen from "use-detect-keyboard-open";
-import { useClickOutside } from "./useClickOutside"; 
+import { useClickOutside } from "./useClickOutside";
 
 import s from "./styles.module.css";
 
+type BottomSheetChildProps = {
+  isOpen: boolean;
+  setOpen: (isOpen: boolean) => void;
+};
+
 type BottomSheetProps = {
-  children?:
-    | React.ReactNode
-    | (({ isOpen, setOpen }: { isOpen: boolean; setOpen: (isOpen: boolean) => void }) => JSX.Element);
-  className?: string;
-  autoHeight?: boolean;
+  children?: ReactNode | ((props: BottomSheetChildProps) => ReactNode);
+  rootClassName?: string;
+  wrapperClassName?: string;
+  lineClassName?: string;
+  contentClassName?: string;
   compactHeight?: string;
   fullHeight?: string;
   onClickOutside?: () => void;
   closeOnClickOutside?: boolean;
 };
 
-export const BottomSheet: React.FC<React.PropsWithChildren<BottomSheetProps>> = ({
+export const BottomSheet: React.FC<React.PropsWithChildren<
+  BottomSheetProps
+>> = ({
   children,
-  className,
-  compactHeight = "20vh",
+  rootClassName,
+  wrapperClassName,
+  lineClassName,
+  contentClassName,
+  compactHeight = "auto",
   fullHeight = "90vh",
   onClickOutside,
-  closeOnClickOutside = true,
+  closeOnClickOutside = true
 }) => {
-  const componentRef = useRef<HTMLDivElement | null>(null); 
+  const componentRef = useRef<HTMLDivElement | null>(null);
   const [height, setHeight] = useState<string>(compactHeight);
   const [isOpen, setOpen] = useState<boolean>(false);
   const y = useMotionValue(0);
 
+  useEffect(() => {
+    if (!isOpen) setHeight(compactHeight);
+  }, [isOpen, setHeight, compactHeight]);
+
   useClickOutside([componentRef], () => {
     onClickOutside?.();
-    closeOnClickOutside && setOpen(false);
+
+    if (closeOnClickOutside) {
+      setOpen(false);
+    }
   });
 
-  const isKeyboardOpen = useDetectKeyboardOpen();
-
-  const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+  const handleDragEnd = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
     setHeight(info.offset.y < 0 ? fullHeight : compactHeight);
     setOpen(info.offset.y < 0);
   };
 
-  const Children = typeof children === "function" ? children({ isOpen, setOpen }) : React.Children.only(children);
+  const Children =
+    typeof children === "function"
+      ? children({ isOpen, setOpen })
+      : React.Children.only(children as React.ReactElement);
 
   if (!children) return null;
 
   return (
     <motion.div
       drag="y"
-      className={cx(s.root, className, isKeyboardOpen && s.keyboardOpen)}
+      className={cx(s.root, rootClassName)}
       style={{
         height: height,
-        y,
+        y
       }}
       dragConstraints={{ top: 0, bottom: 0 }}
       onDragEnd={handleDragEnd}
+      ref={componentRef}
     >
-      {Children}
+      <div className={cx(s.wrapper, wrapperClassName)}>
+        <div className={cx(s.line, lineClassName)} />
+        <div className={cx(s.content, contentClassName)}>{Children}</div>
+      </div>
     </motion.div>
   );
 };

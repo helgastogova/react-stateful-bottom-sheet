@@ -11727,13 +11727,6 @@ function useMotionValue(initial) {
     return value;
 }
 
-var build = {exports: {}};
-
-(()=>{var e={d:(t,r)=>{for(var n in r)e.o(r,n)&&!e.o(t,n)&&Object.defineProperty(t,n,{enumerable:!0,get:r[n]});},o:(e,t)=>Object.prototype.hasOwnProperty.call(e,t),r:e=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0});}},t={};e.r(t),e.d(t,{default:()=>i});const r=reactExports;function n(e,t){return function(e){if(Array.isArray(e))return e}(e)||function(e,t){var r=null==e?null:"undefined"!=typeof Symbol&&e[Symbol.iterator]||e["@@iterator"];if(null!=r){var n,o,i=[],u=!0,a=!1;try{for(r=r.call(e);!(u=(n=r.next()).done)&&(i.push(n.value),!t||i.length!==t);u=!0);}catch(e){a=!0,o=e;}finally{try{u||null==r.return||r.return();}finally{if(a)throw o}}return i}}(e,t)||function(e,t){if(e){if("string"==typeof e)return o(e,t);var r=Object.prototype.toString.call(e).slice(8,-1);return "Object"===r&&e.constructor&&(r=e.constructor.name),"Map"===r||"Set"===r?Array.from(e):"Arguments"===r||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(r)?o(e,t):void 0}}(e,t)||function(){throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}function o(e,t){(null==t||t>e.length)&&(t=e.length);for(var r=0,n=new Array(t);r<t;r++)n[r]=e[r];return n}const i=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:300,t=arguments.length>1?arguments[1]:void 0,o=(0, r.useState)(t),i=n(o,2),u=i[0],a=i[1];return (0, r.useEffect)((function(){var t=function(){var t=window.screen.height-e>window.visualViewport.height;u!=t&&a(t);};return "undefined"!=typeof visualViewport&&window.visualViewport.addEventListener("resize",t),function(){"undefined"!=typeof visualViewport&&window.visualViewport.removeEventListener("resize",t);}}),[]),u};build.exports=t;})();
-
-var buildExports = build.exports;
-var useDetectKeyboardOpen = /*@__PURE__*/getDefaultExportFromCjs(buildExports);
-
 function useClickOutside(refs, callback) {
     const handleClick = (e) => {
         if (!refs.some((ref) => ref.current && ref.current.contains(e.target))) {
@@ -11775,31 +11768,41 @@ function styleInject(css, ref) {
   }
 }
 
-var css_248z = ".styles-module_root__Xsw1F {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  z-index: 100;\n  width: 100%;\n  padding: 24px 16px env(safe-area-inset-bottom, 24px) 16px;\n  background-color: white;\n  border-radius: 12px 12px 0 0;\n  box-shadow: 0 0 10px rgb(0 0 0 / 0.2);\n\n  &:before {\n    position: absolute;\n    top: 12px;\n    right: 0;\n    left: 0;\n    z-index: 101;\n    width: 46px;\n    height: 6px;\n    margin: auto;\n    background: #d1d4db;\n    border-radius: 2px;\n    content: \"\";\n\n    &:hover,\n    &:active {\n      background: #9096a2;\n    }\n  }\n\n  &::after {\n    position: absolute;\n    right: 0;\n    bottom: -100px;\n    left: 0;\n    z-index: 99;\n    width: 100%;\n    height: 100px;\n    margin: auto;\n    background: white;\n    content: \"\";\n  }\n}\n";
-var s = {"root":"styles-module_root__Xsw1F"};
+var css_248z = ".styles-module_root__Xsw1F {\n  position: fixed;\n  box-sizing: border-box;\n  bottom: 0;\n  left: 0;\n  z-index: 100;\n  width: 100%;\n  padding: 24px 16px env(safe-area-inset-bottom, 24px) 16px;\n  background-color: white;\n  border-radius: 12px 12px 0 0;\n  box-shadow: 0 0 10px rgb(0 0 0 / 0.2);\n\n  &:after {\n    position: absolute;\n    right: 0;\n    bottom: -100px;\n    left: 0;\n    z-index: 99;\n    width: 100%;\n    height: 100px;\n    margin: auto;\n    background: white;\n    content: \"\";\n  }\n}\n\n.styles-module_line__Xgaua {\n  height: 16px;\n\n  &:before {\n    position: absolute;\n    top: 12px;\n    right: 0;\n    left: 0;\n    z-index: 101;\n    width: 46px;\n    height: 4px;\n    margin: auto;\n    background: #d1d4db;\n    border-radius: 2px;\n    content: \"\";\n  }\n}\n\n.styles-module_content__IZ0A3 {\n  display: block;\n  overflow-y: scroll;\n  flex-grow: 1;\n\n  &::-webkit-scrollbar {\n    display: none;\n  }\n}\n\n.styles-module_wrapper__RK3i- {\n  display: flex;\n  flex-direction: column;\n  max-height: 100%;\n  box-sizing: border-box;\n  padding: 0 0 env(safe-area-inset-bottom, 24px) 0;\n}\n";
+var s = {"root":"styles-module_root__Xsw1F","line":"styles-module_line__Xgaua","content":"styles-module_content__IZ0A3","wrapper":"styles-module_wrapper__RK3i-"};
 styleInject(css_248z);
 
-const BottomSheet = ({ children, className, compactHeight = "20vh", fullHeight = "90vh", onClickOutside, closeOnClickOutside = true, }) => {
+const BottomSheet = ({ children, rootClassName, wrapperClassName, lineClassName, contentClassName, compactHeight = "auto", fullHeight = "90vh", onClickOutside, closeOnClickOutside = true }) => {
     const componentRef = reactExports.useRef(null);
     const [height, setHeight] = reactExports.useState(compactHeight);
     const [isOpen, setOpen] = reactExports.useState(false);
     const y = useMotionValue(0);
+    reactExports.useEffect(() => {
+        if (!isOpen)
+            setHeight(compactHeight);
+    }, [isOpen, setHeight, compactHeight]);
     useClickOutside([componentRef], () => {
         onClickOutside === null || onClickOutside === void 0 ? void 0 : onClickOutside();
-        closeOnClickOutside && setOpen(false);
+        if (closeOnClickOutside) {
+            setOpen(false);
+        }
     });
-    const isKeyboardOpen = useDetectKeyboardOpen();
     const handleDragEnd = (_, info) => {
         setHeight(info.offset.y < 0 ? fullHeight : compactHeight);
         setOpen(info.offset.y < 0);
     };
-    const Children = typeof children === "function" ? children({ isOpen, setOpen }) : React.Children.only(children);
+    const Children = typeof children === "function"
+        ? children({ isOpen, setOpen })
+        : React.Children.only(children);
     if (!children)
         return null;
-    return (React.createElement(motion.div, { drag: "y", className: cx(s.root, className, isKeyboardOpen && s.keyboardOpen), style: {
+    return (React.createElement(motion.div, { drag: "y", className: cx(s.root, rootClassName), style: {
             height: height,
-            y,
-        }, dragConstraints: { top: 0, bottom: 0 }, onDragEnd: handleDragEnd }, Children));
+            y
+        }, dragConstraints: { top: 0, bottom: 0 }, onDragEnd: handleDragEnd, ref: componentRef },
+        React.createElement("div", { className: cx(s.wrapper, wrapperClassName) },
+            React.createElement("div", { className: cx(s.line, lineClassName) }),
+            React.createElement("div", { className: cx(s.content, contentClassName) }, Children))));
 };
 
 exports.BottomSheet = BottomSheet;
