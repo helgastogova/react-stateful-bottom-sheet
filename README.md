@@ -51,15 +51,19 @@ export default MyComponent;
 ## Props
 The StatefulBottomSheet component accepts the following props:
 
-1. **children** (optional): ReactNode or a function that accepts an object with isOpen and setOpen properties and returns a ReactNode. The component returns null if children is null.
-2. **rootClassName** (optional): A string for the CSS class name of the bottom sheet container.
-3. **wrapperClassName** (optional): A string for the CSS class name of the wrapper element within the bottom sheet container.
-4. **lineClassName** (optional): A string for the CSS class name of the line element inside the bottom sheet.
-5. **contentClassName** (optional): A string for the CSS class name of the content area within the bottom sheet.
-6. **compactHeight** (optional): The height of the bottom sheet in its compact state. Default value is "auto".
-7. **fullHeight** (optional): The height of the bottom sheet in its full state. Default value is "90vh". Set it to "auto" to let the content determine the appropriate height.
-8. **onClickOutside** (optional): A callback function triggered when a click is detected outside the bottom sheet.
-closeOnClickOutside (optional): A boolean indicating whether the bottom sheet should close upon detecting a click outside of it. Default is true.
+| Prop Name | Type | Description |
+| --------- | ---- | ----------- |
+| children | `ReactNode` or `((props: BottomSheetChildProps) => ReactNode)` | React node(s) to be rendered inside the bottom sheet. If this prop is a function, it will receive an object with `isOpen` and `setOpen` properties. |
+| rootClassName | `string` (optional) | A CSS class name for the bottom sheet container. |
+| wrapperClassName | `string` (optional) | A CSS class name for the wrapper element inside the bottom sheet container. |
+| lineClassName | `string` (optional) | A CSS class name for the line element inside the bottom sheet. |
+| contentClassName | `string` (optional) | A CSS class name for the content area inside the bottom sheet. |
+| compactHeight | `string` (optional) | The height of the bottom sheet when it is in its compact state. Default is `"auto"`. |
+| fullHeight | `string` (optional) | The height of the bottom sheet when it is in its full state. Default is `"90vh"`. |
+| onClickOutside | `() => void` (optional) | A callback function that is invoked when a click is detected outside the bottom sheet. |
+| closeOnClickOutside | `boolean` (optional) | Indicates whether the bottom sheet should close when a click is detected outside of it. Default is `true`. |
+
+
 ## License
 React Clickable Post Wrapper is released under the MIT License.
 
