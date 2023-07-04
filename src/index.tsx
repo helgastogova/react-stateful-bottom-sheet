@@ -49,6 +49,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       setOpen(false);
     }
   });
+  
 
   const handleDragEnd = (
     _: MouseEvent | TouchEvent | PointerEvent,
@@ -58,13 +59,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     setOpen(info.offset.y < 0);
   };
 
+  if (!children) return null;
+
   const Children =
     typeof children === "function"
       ? children({ isOpen, setOpen })
       : React.Children.only(children as React.ReactElement);
-
-  if (!children) return null;
-
+  
   return (
     <motion.div
       drag="y"

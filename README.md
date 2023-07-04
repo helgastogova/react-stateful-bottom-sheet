@@ -1,6 +1,6 @@
 # React Stateful Bottom Sheet
 
-React Stateful Bottom Sheet is a dynamic, customizable npm package that offers a stateful bottom sheet component for your React applications. It integrates seamlessly into your project, enabling the creation of interactive and responsive user interfaces.
+React Stateful Bottom Sheet is a versatile npm package that provides a stateful bottom sheet component for your React applications. It fits easily into your project, enhancing user interaction and responsiveness.
 
 ## Features
 1. **Flexible and customizable:** Adapt the bottom sheet component to match your project's design and functionality requirements with ease.
@@ -12,7 +12,7 @@ React Stateful Bottom Sheet is a dynamic, customizable npm package that offers a
 With these features, React Stateful Bottom Sheet serves as a comprehensive solution for implementing bottom sheets in your React applications, facilitating the creation of dynamic, engaging user interfaces.
 
 ## Demo 
-[codesandbox demo](https://codesandbox.io/s/romantic-ritchie-sj8qzf)
+[Check out demo on codesandbox](https://codesandbox.io/s/romantic-ritchie-sj8qzf)
 
 ## Installation
 `npm install react-stateful-bottom-sheet`
@@ -51,16 +51,15 @@ export default MyComponent;
 ## Props
 The StatefulBottomSheet component accepts the following props:
 
-1. **rootClassName** (optional): A string representing the CSS class name for the bottom sheet container.
-2. **wrapperClassName** (optional): A string representing the CSS class name for the wrapper element inside the bottom sheet container.
-3. **lineClassName** (optional): A string representing the CSS class name for the line element inside the bottom sheet.
-4. **contentClassName** (optional): A string representing the CSS class name for the content area inside the bottom sheet.
-5. **compactHeight** (optional): The height of the bottom sheet when it is in its compact state. Default is "auto".
-6. **fullHeight** (optional): The height of the bottom sheet when it is in its full state. Default is "90vh". Set it to "auto" if you want to have a height appropriate for your content.
-7. **children** (optional): React nodes to be rendered inside the bottom sheet. It can either be a single child or a function which returns a child and accepts an object with isOpen and setOpen properties. If children is null, component returns null;
-8. **onClickOutside** (optional): A callback function that is invoked when a click is detected outside the bottom sheet.
-9. **closeOnClickOutside** (optional): A boolean value indicating whether the bottom sheet should be closed when a click is detected outside of it. Default is true.
-
+1. **children** (optional): ReactNode or a function that accepts an object with isOpen and setOpen properties and returns a ReactNode. The component returns null if children is null.
+2. **rootClassName** (optional): A string for the CSS class name of the bottom sheet container.
+3. **wrapperClassName** (optional): A string for the CSS class name of the wrapper element within the bottom sheet container.
+4. **lineClassName** (optional): A string for the CSS class name of the line element inside the bottom sheet.
+5. **contentClassName** (optional): A string for the CSS class name of the content area within the bottom sheet.
+6. **compactHeight** (optional): The height of the bottom sheet in its compact state. Default value is "auto".
+7. **fullHeight** (optional): The height of the bottom sheet in its full state. Default value is "90vh". Set it to "auto" to let the content determine the appropriate height.
+8. **onClickOutside** (optional): A callback function triggered when a click is detected outside the bottom sheet.
+closeOnClickOutside (optional): A boolean indicating whether the bottom sheet should close upon detecting a click outside of it. Default is true.
 ## License
 React Clickable Post Wrapper is released under the MIT License.
 
