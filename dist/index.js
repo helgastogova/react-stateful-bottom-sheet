@@ -9015,11 +9015,11 @@ const BottomSheet = ({ children, rootClassName, wrapperClassName, lineClassName,
         setHeight(info.offset.y < 0 ? fullHeight : compactHeight);
         setOpen(info.offset.y < 0);
     };
+    if (!children)
+        return null;
     const Children = typeof children === "function"
         ? children({ isOpen, setOpen })
         : React.Children.only(children);
-    if (!children)
-        return null;
     return (React.createElement(motion.div, { drag: "y", className: cx(s.root, rootClassName), style: {
             height: height,
             y
