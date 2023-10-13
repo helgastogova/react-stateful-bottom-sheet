@@ -8996,14 +8996,13 @@ var css_248z = ".styles-module_root__Xsw1F {\n  position: fixed;\n  box-sizing: 
 var s = {"root":"styles-module_root__Xsw1F","line":"styles-module_line__Xgaua","innerLine":"styles-module_innerLine__9uNv0","content":"styles-module_content__IZ0A3","wrapper":"styles-module_wrapper__RK3i-"};
 styleInject(css_248z);
 
-const BottomSheet = ({ children, rootClassName, wrapperClassName, lineClassName, contentClassName, compactHeight = "auto", fullHeight = "90vh", onClickOutside, closeOnClickOutside = true }) => {
+const BottomSheet = ({ children, rootClassName, wrapperClassName, lineClassName, contentClassName, compactHeight = "auto", fullHeight = "90vh", onClickOutside, closeOnClickOutside = true, }) => {
     const componentRef = React.useRef(null);
     const [height, setHeight] = React.useState(compactHeight);
     const [isOpen, setOpen] = React.useState(false);
     const y = useMotionValue(0);
     React.useEffect(() => {
-        if (!isOpen)
-            setHeight(compactHeight);
+        setHeight(isOpen ? fullHeight : compactHeight);
     }, [isOpen, setHeight, compactHeight]);
     useClickOutside([componentRef], () => {
         onClickOutside === null || onClickOutside === void 0 ? void 0 : onClickOutside();
@@ -9022,7 +9021,7 @@ const BottomSheet = ({ children, rootClassName, wrapperClassName, lineClassName,
         : React.Children.only(children);
     return (React.createElement(motion.div, { drag: "y", className: cx(s.root, rootClassName), style: {
             height: height,
-            y
+            y,
         }, dragConstraints: { top: 0, bottom: 0 }, onDragEnd: handleDragEnd, ref: componentRef },
         React.createElement("div", { className: cx(s.wrapper, wrapperClassName) },
             React.createElement("div", { className: s.line },
