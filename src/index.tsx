@@ -31,7 +31,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   compactHeight = "auto",
   fullHeight = "90vh",
   onClickOutside,
-  closeOnClickOutside = true
+  closeOnClickOutside = true,
 }) => {
   const componentRef = useRef<HTMLDivElement | null>(null);
   const [height, setHeight] = useState<string>(compactHeight);
@@ -39,7 +39,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   const y = useMotionValue(0);
 
   useEffect(() => {
-    if (!isOpen) setHeight(compactHeight);
+    setHeight(isOpen ? fullHeight : compactHeight);
   }, [isOpen, setHeight, compactHeight]);
 
   useClickOutside([componentRef], () => {
@@ -49,7 +49,6 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       setOpen(false);
     }
   });
-  
 
   const handleDragEnd = (
     _: MouseEvent | TouchEvent | PointerEvent,
@@ -65,14 +64,14 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     typeof children === "function"
       ? children({ isOpen, setOpen })
       : React.Children.only(children as React.ReactElement);
-  
+
   return (
     <motion.div
       drag="y"
       className={cx(s.root, rootClassName)}
       style={{
         height: height,
-        y
+        y,
       }}
       dragConstraints={{ top: 0, bottom: 0 }}
       onDragEnd={handleDragEnd}
