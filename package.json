@@ -9,7 +9,8 @@
     "build": "rollup -c",
     "lint": "eslint './{src,app}/**/*.{ts,tsx}'",
     "size": "size-limit",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",
