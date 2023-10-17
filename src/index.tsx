@@ -40,7 +40,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
   useEffect(() => {
     setHeight(isOpen ? fullHeight : compactHeight);
-  }, [isOpen, setHeight, compactHeight]);
+  }, [isOpen, setHeight, compactHeight, fullHeight]);
 
   useClickOutside([componentRef], () => {
     onClickOutside?.();

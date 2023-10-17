@@ -135,29 +135,43 @@ function useVisualElement(Component, visualState, props, createVisualElement) {
     React.useInsertionEffect(() => {
         visualElement && visualElement.update(props, presenceContext);
     });
-    useIsomorphicLayoutEffect(() => {
-        visualElement && visualElement.render();
-    });
-    React.useEffect(() => {
-        visualElement && visualElement.updateFeatures();
-    });
     /**
-     * Ideally this function would always run in a useEffect.
-     *
-     * However, if we have optimised appear animations to handoff from,
-     * it needs to happen synchronously to ensure there's no flash of
-     * incorrect styles in the event of a hydration error.
-     *
-     * So if we detect a situtation where optimised appear animations
-     * are running, we use useLayoutEffect to trigger animations.
+     * Cache this value as we want to know whether HandoffAppearAnimations
+     * was present on initial render - it will be deleted after this.
      */
-    const useAnimateChangesEffect = window.HandoffAppearAnimations
-        ? useIsomorphicLayoutEffect
-        : React.useEffect;
-    useAnimateChangesEffect(() => {
-        if (visualElement && visualElement.animationState) {
+    const canHandoff = React.useRef(Boolean(window.HandoffAppearAnimations));
+    useIsomorphicLayoutEffect(() => {
+        if (!visualElement)
+            return;
+        visualElement.render();
+        /**
+         * Ideally this function would always run in a useEffect.
+         *
+         * However, if we have optimised appear animations to handoff from,
+         * it needs to happen synchronously to ensure there's no flash of
+         * incorrect styles in the event of a hydration error.
+         *
+         * So if we detect a situtation where optimised appear animations
+         * are running, we use useLayoutEffect to trigger animations.
+         */
+        if (canHandoff.current && visualElement.animationState) {
             visualElement.animationState.animateChanges();
         }
+    });
+    React.useEffect(() => {
+        if (!visualElement)
+            return;
+        visualElement.updateFeatures();
+        if (!canHandoff.current && visualElement.animationState) {
+            visualElement.animationState.animateChanges();
+        }
+        /**
+         * Once we've handed off animations we can delete HandoffAppearAnimations
+         * so components added after the initial render can animate changes
+         * in useEffect vs useLayoutEffect.
+         */
+        window.HandoffAppearAnimations = undefined;
+        canHandoff.current = false;
     });
     return visualElement;
 }
@@ -1262,29 +1276,197 @@ function makeLatestValues(props, context, presenceContext, scrapeMotionValues) {
     return values;
 }
 
+const noop = (any) => any;
+
+class Queue {
+    constructor() {
+        this.order = [];
+        this.scheduled = new Set();
+    }
+    add(process) {
+        if (!this.scheduled.has(process)) {
+            this.scheduled.add(process);
+            this.order.push(process);
+            return true;
+        }
+    }
+    remove(process) {
+        const index = this.order.indexOf(process);
+        if (index !== -1) {
+            this.order.splice(index, 1);
+            this.scheduled.delete(process);
+        }
+    }
+    clear() {
+        this.order.length = 0;
+        this.scheduled.clear();
+    }
+}
+function createRenderStep(runNextFrame) {
+    /**
+     * We create and reuse two queues, one to queue jobs for the current frame
+     * and one for the next. We reuse to avoid triggering GC after x frames.
+     */
+    let thisFrame = new Queue();
+    let nextFrame = new Queue();
+    let numToRun = 0;
+    /**
+     * Track whether we're currently processing jobs in this step. This way
+     * we can decide whether to schedule new jobs for this frame or next.
+     */
+    let isProcessing = false;
+    let flushNextFrame = false;
+    /**
+     * A set of processes which were marked keepAlive when scheduled.
+     */
+    const toKeepAlive = new WeakSet();
+    const step = {
+        /**
+         * Schedule a process to run on the next frame.
+         */
+        schedule: (callback, keepAlive = false, immediate = false) => {
+            const addToCurrentFrame = immediate && isProcessing;
+            const queue = addToCurrentFrame ? thisFrame : nextFrame;
+            if (keepAlive)
+                toKeepAlive.add(callback);
+            if (queue.add(callback) && addToCurrentFrame && isProcessing) {
+                // If we're adding it to the currently running queue, update its measured size
+                numToRun = thisFrame.order.length;
+            }
+            return callback;
+        },
+        /**
+         * Cancel the provided callback from running on the next frame.
+         */
+        cancel: (callback) => {
+            nextFrame.remove(callback);
+            toKeepAlive.delete(callback);
+        },
+        /**
+         * Execute all schedule callbacks.
+         */
+        process: (frameData) => {
+            /**
+             * If we're already processing we've probably been triggered by a flushSync
+             * inside an existing process. Instead of executing, mark flushNextFrame
+             * as true and ensure we flush the following frame at the end of this one.
+             */
+            if (isProcessing) {
+                flushNextFrame = true;
+                return;
+            }
+            isProcessing = true;
+            [thisFrame, nextFrame] = [nextFrame, thisFrame];
+            // Clear the next frame queue
+            nextFrame.clear();
+            // Execute this frame
+            numToRun = thisFrame.order.length;
+            if (numToRun) {
+                for (let i = 0; i < numToRun; i++) {
+                    const callback = thisFrame.order[i];
+                    callback(frameData);
+                    if (toKeepAlive.has(callback)) {
+                        step.schedule(callback);
+                        runNextFrame();
+                    }
+                }
+            }
+            isProcessing = false;
+            if (flushNextFrame) {
+                flushNextFrame = false;
+                step.process(frameData);
+            }
+        },
+    };
+    return step;
+}
+
+const stepsOrder = [
+    "prepare",
+    "read",
+    "update",
+    "preRender",
+    "render",
+    "postRender",
+];
+const maxElapsed = 40;
+function createRenderBatcher(scheduleNextBatch, allowKeepAlive) {
+    let runNextFrame = false;
+    let useDefaultElapsed = true;
+    const state = {
+        delta: 0,
+        timestamp: 0,
+        isProcessing: false,
+    };
+    const steps = stepsOrder.reduce((acc, key) => {
+        acc[key] = createRenderStep(() => (runNextFrame = true));
+        return acc;
+    }, {});
+    const processStep = (stepId) => steps[stepId].process(state);
+    const processBatch = () => {
+        const timestamp = performance.now();
+        runNextFrame = false;
+        state.delta = useDefaultElapsed
+            ? 1000 / 60
+            : Math.max(Math.min(timestamp - state.timestamp, maxElapsed), 1);
+        state.timestamp = timestamp;
+        state.isProcessing = true;
+        stepsOrder.forEach(processStep);
+        state.isProcessing = false;
+        if (runNextFrame && allowKeepAlive) {
+            useDefaultElapsed = false;
+            scheduleNextBatch(processBatch);
+        }
+    };
+    const wake = () => {
+        runNextFrame = true;
+        useDefaultElapsed = true;
+        if (!state.isProcessing) {
+            scheduleNextBatch(processBatch);
+        }
+    };
+    const schedule = stepsOrder.reduce((acc, key) => {
+        const step = steps[key];
+        acc[key] = (process, keepAlive = false, immediate = false) => {
+            if (!runNextFrame)
+                wake();
+            return step.schedule(process, keepAlive, immediate);
+        };
+        return acc;
+    }, {});
+    const cancel = (process) => stepsOrder.forEach((key) => steps[key].cancel(process));
+    return { schedule, cancel, state, steps };
+}
+
+const { schedule: frame, cancel: cancelFrame, state: frameData, steps, } = createRenderBatcher(typeof requestAnimationFrame !== "undefined" ? requestAnimationFrame : noop, true);
+
 const svgMotionConfig = {
     useVisualState: makeUseVisualState({
         scrapeMotionValuesFromProps: scrapeMotionValuesFromProps,
         createRenderState: createSvgRenderState,
         onMount: (props, instance, { renderState, latestValues }) => {
-            try {
-                renderState.dimensions =
-                    typeof instance.getBBox ===
-                        "function"
-                        ? instance.getBBox()
-                        : instance.getBoundingClientRect();
-            }
-            catch (e) {
-                // Most likely trying to measure an unrendered element under Firefox
-                renderState.dimensions = {
-                    x: 0,
-                    y: 0,
-                    width: 0,
-                    height: 0,
-                };
-            }
-            buildSVGAttrs(renderState, latestValues, { enableHardwareAcceleration: false }, isSVGTag(instance.tagName), props.transformTemplate);
-            renderSVG(instance, renderState);
+            frame.read(() => {
+                try {
+                    renderState.dimensions =
+                        typeof instance.getBBox ===
+                            "function"
+                            ? instance.getBBox()
+                            : instance.getBoundingClientRect();
+                }
+                catch (e) {
+                    // Most likely trying to measure an unrendered element under Firefox
+                    renderState.dimensions = {
+                        x: 0,
+                        y: 0,
+                        width: 0,
+                        height: 0,
+                    };
+                }
+            });
+            frame.render(() => {
+                buildSVGAttrs(renderState, latestValues, { enableHardwareAcceleration: false }, isSVGTag(instance.tagName), props.transformTemplate);
+                renderSVG(instance, renderState);
+            });
         },
     }),
 };
@@ -1417,147 +1599,6 @@ class Feature {
     update() { }
 }
 
-function createRenderStep(runNextFrame) {
-    /**
-     * We create and reuse two arrays, one to queue jobs for the current frame
-     * and one for the next. We reuse to avoid triggering GC after x frames.
-     */
-    let toRun = [];
-    let toRunNextFrame = [];
-    /**
-     *
-     */
-    let numToRun = 0;
-    /**
-     * Track whether we're currently processing jobs in this step. This way
-     * we can decide whether to schedule new jobs for this frame or next.
-     */
-    let isProcessing = false;
-    let flushNextFrame = false;
-    /**
-     * A set of processes which were marked keepAlive when scheduled.
-     */
-    const toKeepAlive = new WeakSet();
-    const step = {
-        /**
-         * Schedule a process to run on the next frame.
-         */
-        schedule: (callback, keepAlive = false, immediate = false) => {
-            const addToCurrentFrame = immediate && isProcessing;
-            const buffer = addToCurrentFrame ? toRun : toRunNextFrame;
-            if (keepAlive)
-                toKeepAlive.add(callback);
-            // If the buffer doesn't already contain this callback, add it
-            if (buffer.indexOf(callback) === -1) {
-                buffer.push(callback);
-                // If we're adding it to the currently running buffer, update its measured size
-                if (addToCurrentFrame && isProcessing)
-                    numToRun = toRun.length;
-            }
-            return callback;
-        },
-        /**
-         * Cancel the provided callback from running on the next frame.
-         */
-        cancel: (callback) => {
-            const index = toRunNextFrame.indexOf(callback);
-            if (index !== -1)
-                toRunNextFrame.splice(index, 1);
-            toKeepAlive.delete(callback);
-        },
-        /**
-         * Execute all schedule callbacks.
-         */
-        process: (frameData) => {
-            /**
-             * If we're already processing we've probably been triggered by a flushSync
-             * inside an existing process. Instead of executing, mark flushNextFrame
-             * as true and ensure we flush the following frame at the end of this one.
-             */
-            if (isProcessing) {
-                flushNextFrame = true;
-                return;
-            }
-            isProcessing = true;
-            [toRun, toRunNextFrame] = [toRunNextFrame, toRun];
-            // Clear the next frame list
-            toRunNextFrame.length = 0;
-            // Execute this frame
-            numToRun = toRun.length;
-            if (numToRun) {
-                for (let i = 0; i < numToRun; i++) {
-                    const callback = toRun[i];
-                    callback(frameData);
-                    if (toKeepAlive.has(callback)) {
-                        step.schedule(callback);
-                        runNextFrame();
-                    }
-                }
-            }
-            isProcessing = false;
-            if (flushNextFrame) {
-                flushNextFrame = false;
-                step.process(frameData);
-            }
-        },
-    };
-    return step;
-}
-
-const frameData = {
-    delta: 0,
-    timestamp: 0,
-    isProcessing: false,
-};
-
-const maxElapsed = 40;
-let useDefaultElapsed = true;
-let runNextFrame = false;
-const stepsOrder = [
-    "read",
-    "update",
-    "preRender",
-    "render",
-    "postRender",
-];
-const steps = stepsOrder.reduce((acc, key) => {
-    acc[key] = createRenderStep(() => (runNextFrame = true));
-    return acc;
-}, {});
-const processStep = (stepId) => steps[stepId].process(frameData);
-const processFrame = (timestamp) => {
-    runNextFrame = false;
-    frameData.delta = useDefaultElapsed
-        ? 1000 / 60
-        : Math.max(Math.min(timestamp - frameData.timestamp, maxElapsed), 1);
-    frameData.timestamp = timestamp;
-    frameData.isProcessing = true;
-    stepsOrder.forEach(processStep);
-    frameData.isProcessing = false;
-    if (runNextFrame) {
-        useDefaultElapsed = false;
-        requestAnimationFrame(processFrame);
-    }
-};
-const startLoop = () => {
-    runNextFrame = true;
-    useDefaultElapsed = true;
-    if (!frameData.isProcessing)
-        requestAnimationFrame(processFrame);
-};
-const frame = stepsOrder.reduce((acc, key) => {
-    const step = steps[key];
-    acc[key] = (process, keepAlive = false, immediate = false) => {
-        if (!runNextFrame)
-            startLoop();
-        return step.schedule(process, keepAlive, immediate);
-    };
-    return acc;
-}, {});
-function cancelFrame(process) {
-    stepsOrder.forEach((key) => steps[key].cancel(process));
-}
-
 function addHoverEvent(node, isActive) {
     const eventName = "pointer" + (isActive ? "enter" : "leave");
     const callbackName = "onHover" + (isActive ? "Start" : "End");
@@ -1637,8 +1678,6 @@ const isNodeOrChild = (parent, child) => {
         return isNodeOrChild(parent, child.parentElement);
     }
 };
-
-const noop = (any) => any;
 
 function fireSyntheticPointerEvent(name, handler) {
     if (!handler)
@@ -1993,22 +2032,6 @@ function animateStyle(element, valueName, keyframes, { delay = 0, duration, repe
         iterations: repeat + 1,
         direction: repeatType === "reverse" ? "alternate" : "normal",
     });
-}
-
-const featureTests = {
-    waapi: () => Object.hasOwnProperty.call(Element.prototype, "animate"),
-};
-const results = {};
-const supports = {};
-/**
- * Generate features tests that cache their results.
- */
-for (const key in featureTests) {
-    supports[key] = () => {
-        if (results[key] === undefined)
-            results[key] = featureTests[key]();
-        return results[key];
-    };
 }
 
 function getFinalKeyframe(keyframes, { repeat, repeatType = "loop" }) {
@@ -2985,12 +3008,10 @@ function animateValue({ autoplay = true, delay = 0, driver = frameloopDriver, ke
     let resolveFinishedPromise;
     let currentFinishedPromise;
     /**
-     * Create a new finished Promise every time we enter the
-     * finished state and resolve the old Promise. This is
-     * WAAPI-compatible behaviour.
+     * Resolve the current Promise every time we enter the
+     * finished state. This is WAAPI-compatible behaviour.
      */
     const updateFinishedPromise = () => {
-        resolveFinishedPromise && resolveFinishedPromise();
         currentFinishedPromise = new Promise((resolve) => {
             resolveFinishedPromise = resolve;
         });
@@ -3158,6 +3179,7 @@ function animateValue({ autoplay = true, delay = 0, driver = frameloopDriver, ke
     const cancel = () => {
         playState = "idle";
         stopAnimationDriver();
+        resolveFinishedPromise();
         updateFinishedPromise();
         startTime = cancelTime = null;
     };
@@ -3165,7 +3187,7 @@ function animateValue({ autoplay = true, delay = 0, driver = frameloopDriver, ke
         playState = "finished";
         onComplete && onComplete();
         stopAnimationDriver();
-        updateFinishedPromise();
+        resolveFinishedPromise();
     };
     const play = () => {
         if (hasStopped)
@@ -3179,6 +3201,9 @@ function animateValue({ autoplay = true, delay = 0, driver = frameloopDriver, ke
         }
         else if (!startTime || playState === "finished") {
             startTime = now;
+        }
+        if (playState === "finished") {
+            updateFinishedPromise();
         }
         cancelTime = startTime;
         holdTime = null;
@@ -3256,6 +3281,16 @@ function animateValue({ autoplay = true, delay = 0, driver = frameloopDriver, ke
     return controls;
 }
 
+function memo(callback) {
+    let result;
+    return () => {
+        if (result === undefined)
+            result = callback();
+        return result;
+    };
+}
+
+const supportsWaapi = memo(() => Object.hasOwnProperty.call(Element.prototype, "animate"));
 /**
  * A list of values that can be hardware-accelerated.
  */
@@ -3281,7 +3316,7 @@ const requiresPregeneratedKeyframes = (valueName, options) => options.type === "
     valueName === "backgroundColor" ||
     !isWaapiSupportedEasing(options.ease);
 function createAcceleratedAnimation(value, valueName, { onUpdate, onComplete, ...options }) {
-    const canAccelerateAnimation = supports.waapi() &&
+    const canAccelerateAnimation = supportsWaapi() &&
         acceleratedValues.has(valueName) &&
         !options.repeatDelay &&
         options.repeatType !== "mirror" &&
@@ -3296,9 +3331,8 @@ function createAcceleratedAnimation(value, valueName, { onUpdate, onComplete, ..
     let resolveFinishedPromise;
     let currentFinishedPromise;
     /**
-     * Create a new finished Promise every time we enter the
-     * finished state and resolve the old Promise. This is
-     * WAAPI-compatible behaviour.
+     * Resolve the current Promise every time we enter the
+     * finished state. This is WAAPI-compatible behaviour.
      */
     const updateFinishedPromise = () => {
         currentFinishedPromise = new Promise((resolve) => {
@@ -3348,6 +3382,19 @@ function createAcceleratedAnimation(value, valueName, { onUpdate, onComplete, ..
         ease: ease,
         times,
     });
+    /**
+     * WAAPI animations don't resolve startTime synchronously. But a blocked
+     * thread could delay the startTime resolution by a noticeable amount.
+     * For synching handoff animations with the new Motion animation we want
+     * to ensure startTime is synchronously set.
+     */
+    if (options.syncStart) {
+        animation.startTime = frameData.isProcessing
+            ? frameData.timestamp
+            : document.timeline
+                ? document.timeline.currentTime
+                : performance.now();
+    }
     const cancelAnimation = () => animation.cancel();
     const safeCancel = () => {
         frame.update(cancelAnimation);
@@ -3370,9 +3417,14 @@ function createAcceleratedAnimation(value, valueName, { onUpdate, onComplete, ..
     /**
      * Animation interrupt callback.
      */
-    return {
+    const controls = {
         then(resolve, reject) {
             return currentFinishedPromise.then(resolve, reject);
+        },
+        attachTimeline(timeline) {
+            animation.timeline = timeline;
+            animation.onfinish = null;
+            return noop;
         },
         get time() {
             return millisecondsToSeconds(animation.currentTime || 0);
@@ -3424,6 +3476,7 @@ function createAcceleratedAnimation(value, valueName, { onUpdate, onComplete, ..
         complete: () => animation.finish(),
         cancel: safeCancel,
     };
+    return controls;
 }
 
 function createInstantAnimation({ keyframes, delay, onUpdate, onComplete, }) {
@@ -3830,7 +3883,7 @@ class MotionValue {
          * This will be replaced by the build step with the latest version number.
          * When MotionValues are provided to motion components, warn if versions are mixed.
          */
-        this.version = "10.12.18";
+        this.version = "10.16.4";
         /**
          * Duration, in milliseconds, since last updating frame.
          *
@@ -4284,7 +4337,11 @@ function animateTarget(visualElement, definition, { delay = 0, transitionOverrid
                 shouldBlockAnimation(animationTypeState, key))) {
             continue;
         }
-        const valueTransition = { delay, elapsed: 0, ...transition };
+        const valueTransition = {
+            delay,
+            elapsed: 0,
+            ...transition,
+        };
         /**
          * If this is the first time a value is being animated, check
          * to see if we're handling off from an existing animation.
@@ -4293,6 +4350,7 @@ function animateTarget(visualElement, definition, { delay = 0, transitionOverrid
             const appearId = visualElement.getProps()[optimizedAppearDataAttribute];
             if (appearId) {
                 valueTransition.elapsed = window.HandoffAppearAnimations(appearId, key, value, frame);
+                valueTransition.syncStart = true;
             }
         }
         value.start(animateMotionValue(key, value, valueTarget, visualElement.shouldReduceMotion && transformProps.has(key)
@@ -6189,6 +6247,12 @@ function boxEquals(a, b) {
         a.y.min === b.y.min &&
         a.y.max === b.y.max);
 }
+function boxEqualsRounded(a, b) {
+    return (Math.round(a.x.min) === Math.round(b.x.min) &&
+        Math.round(a.x.max) === Math.round(b.x.max) &&
+        Math.round(a.y.min) === Math.round(b.y.min) &&
+        Math.round(a.y.max) === Math.round(b.y.max));
+}
 function aspectRatio(box) {
     return calcLength(box.x) / calcLength(box.y);
 }
@@ -6616,7 +6680,7 @@ function createProjectionNode({ attachResizeListener, defaultParent, measureScro
                      * but its position relative to its parent has changed.
                      */
                     const targetChanged = !this.targetLayout ||
-                        !boxEquals(this.targetLayout, newLayout) ||
+                        !boxEqualsRounded(this.targetLayout, newLayout) ||
                         hasRelativeTargetChanged;
                     /**
                      * If the layout hasn't seemed to have changed, it might be that the
@@ -7722,7 +7786,7 @@ function notifyLayoutUpdate(node) {
                     calcRelativePosition(relativeSnapshot, snapshot.layoutBox, parentSnapshot.layoutBox);
                     const relativeLayout = createBox();
                     calcRelativePosition(relativeLayout, layout, parentLayout.layoutBox);
-                    if (!boxEquals(relativeSnapshot, relativeLayout)) {
+                    if (!boxEqualsRounded(relativeSnapshot, relativeLayout)) {
                         hasRelativeTargetChanged = true;
                     }
                     if (relativeParent.options.layoutRoot) {
@@ -7839,9 +7903,20 @@ const defaultLayoutTransition = {
     duration: 0.45,
     ease: [0.4, 0, 0.1, 1],
 };
+const userAgentContains = (string) => typeof navigator !== "undefined" &&
+    navigator.userAgent.toLowerCase().includes(string);
+/**
+ * Measured bounding boxes must be rounded in Safari and
+ * left untouched in Chrome, otherwise non-integer layouts within scaled-up elements
+ * can appear to jump.
+ */
+const roundPoint = userAgentContains("applewebkit/") && !userAgentContains("chrome/")
+    ? Math.round
+    : noop;
 function roundAxis(axis) {
-    axis.min = Math.round(axis.min);
-    axis.max = Math.round(axis.max);
+    // Round to the nearest .5 pixels to support subpixel layouts
+    axis.min = roundPoint(axis.min);
+    axis.max = roundPoint(axis.max);
 }
 function roundBox(box) {
     roundAxis(box.x);
@@ -7923,7 +7998,8 @@ function getVariableValue(current, element, depth = 1) {
     // Attempt to read this CSS variable off the element
     const resolved = window.getComputedStyle(element).getPropertyValue(token);
     if (resolved) {
-        return resolved.trim();
+        const trimmed = resolved.trim();
+        return isNumericalString(trimmed) ? parseFloat(trimmed) : trimmed;
     }
     else if (isCSSVariableToken(fallback)) {
         // The fallback might itself be a CSS variable, in which case we attempt to resolve it too.
@@ -8042,6 +8118,9 @@ const positionalValues = {
     x: getTranslateFromMatrix(4, 13),
     y: getTranslateFromMatrix(5, 14),
 };
+// Alias translate longform names
+positionalValues.translateX = positionalValues.x;
+positionalValues.translateY = positionalValues.y;
 const convertChangedValueTypes = (target, visualElement, changedKeys) => {
     const originBbox = visualElement.measureViewportBox();
     const element = visualElement.current;
@@ -8246,7 +8325,7 @@ function updateMotionValuesFromProps(element, next, prev) {
              * and warn against mismatches.
              */
             if (process.env.NODE_ENV === "development") {
-                warnOnce(nextValue.version === "10.12.18", `Attempting to mix Framer Motion versions ${nextValue.version} with 10.12.18 may not work as expected.`);
+                warnOnce(nextValue.version === "10.16.4", `Attempting to mix Framer Motion versions ${nextValue.version} with 10.16.4 may not work as expected.`);
             }
         }
         else if (isMotionValue(prevValue)) {
@@ -8715,9 +8794,10 @@ class VisualElement {
      * directly from the instance (which might have performance implications).
      */
     readValue(key) {
+        var _a;
         return this.latestValues[key] !== undefined || !this.current
             ? this.latestValues[key]
-            : this.readValueFromInstance(this.current, key, this.options);
+            : (_a = this.getBaseTargetFromProps(this.props, key)) !== null && _a !== void 0 ? _a : this.readValueFromInstance(this.current, key, this.options);
     }
     /**
      * Set the base target to later animate back to. This is currently
@@ -9003,7 +9083,7 @@ const BottomSheet = ({ children, rootClassName, wrapperClassName, lineClassName,
     const y = useMotionValue(0);
     React.useEffect(() => {
         setHeight(isOpen ? fullHeight : compactHeight);
-    }, [isOpen, setHeight, compactHeight]);
+    }, [isOpen, setHeight, compactHeight, fullHeight]);
     useClickOutside([componentRef], () => {
         onClickOutside === null || onClickOutside === void 0 ? void 0 : onClickOutside();
         if (closeOnClickOutside) {
