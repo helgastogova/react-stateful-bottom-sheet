@@ -1,8 +1,13 @@
 'use strict';
 
+Object.defineProperty(exports, '__esModule', { value: true });
+
 var React = require('react');
 
-function _interopNamespaceDefault(e) {
+function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
+
+function _interopNamespace(e) {
+	if (e && e.__esModule) return e;
 	var n = Object.create(null);
 	if (e) {
 		Object.keys(e).forEach(function (k) {
@@ -15,11 +20,12 @@ function _interopNamespaceDefault(e) {
 			}
 		});
 	}
-	n.default = e;
+	n["default"] = e;
 	return Object.freeze(n);
 }
 
-var React__namespace = /*#__PURE__*/_interopNamespaceDefault(React);
+var React__namespace = /*#__PURE__*/_interopNamespace(React);
+var React__default = /*#__PURE__*/_interopDefaultLegacy(React);
 
 function getDefaultExportFromCjs (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
@@ -32,6 +38,7 @@ var classnames = {exports: {}};
 	Licensed under the MIT License (MIT), see
 	http://jedwatson.github.io/classnames
 */
+classnames.exports;
 
 (function (module) {
 	/* global define */
@@ -3776,7 +3783,9 @@ const animateMotionValue = (valueName, value, target, transition = {}) => {
              * If we can't animate this value, or the global instant animation flag is set,
              * or this is simply defined as an instant transition, return an instant transition.
              */
-            return createInstantAnimation(options);
+            return createInstantAnimation(instantAnimationState.current
+                ? { ...options, delay: 0 }
+                : options);
         }
         /**
          * Animate via WAAPI if possible.
@@ -5961,7 +5970,7 @@ const correctBoxShadow = {
     },
 };
 
-class MeasureLayoutWithContext extends React.Component {
+class MeasureLayoutWithContext extends React__default["default"].Component {
     /**
      * This only mounts projection nodes for components that
      * need measuring, we might want to do it for all components
@@ -6062,7 +6071,7 @@ class MeasureLayoutWithContext extends React.Component {
 function MeasureLayout(props) {
     const [isPresent, safeToRemove] = usePresence();
     const layoutGroup = React.useContext(LayoutGroupContext);
-    return (React.createElement(MeasureLayoutWithContext, { ...props, layoutGroup: layoutGroup, switchLayoutGroup: React.useContext(SwitchLayoutGroupContext), isPresent: isPresent, safeToRemove: safeToRemove }));
+    return (React__default["default"].createElement(MeasureLayoutWithContext, { ...props, layoutGroup: layoutGroup, switchLayoutGroup: React.useContext(SwitchLayoutGroupContext), isPresent: isPresent, safeToRemove: safeToRemove }));
 }
 const defaultScaleCorrectors = {
     borderRadius: {
@@ -9098,15 +9107,15 @@ const BottomSheet = ({ children, rootClassName, wrapperClassName, lineClassName,
         return null;
     const Children = typeof children === "function"
         ? children({ isOpen, setOpen })
-        : React.Children.only(children);
-    return (React.createElement(motion.div, { drag: "y", className: cx(s.root, rootClassName), style: {
+        : React__default["default"].Children.only(children);
+    return (React__default["default"].createElement(motion.div, { drag: "y", className: cx(s.root, rootClassName), style: {
             height: height,
             y,
         }, dragConstraints: { top: 0, bottom: 0 }, onDragEnd: handleDragEnd, ref: componentRef },
-        React.createElement("div", { className: cx(s.wrapper, wrapperClassName) },
-            React.createElement("div", { className: s.line },
-                React.createElement("div", { className: cx(s.innerLine, lineClassName) })),
-            React.createElement("div", { className: cx(s.content, contentClassName) }, Children))));
+        React__default["default"].createElement("div", { className: cx(s.wrapper, wrapperClassName) },
+            React__default["default"].createElement("div", { className: s.line },
+                React__default["default"].createElement("div", { className: cx(s.innerLine, lineClassName) })),
+            React__default["default"].createElement("div", { className: cx(s.content, contentClassName) }, Children))));
 };
 
 exports.BottomSheet = BottomSheet;
