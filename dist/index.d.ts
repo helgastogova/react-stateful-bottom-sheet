@@ -1,5 +1,5 @@
 import React, { ReactNode } from "react";
-type BottomSheetChildProps = {
+export type BottomSheetChildProps = {
     isOpen: boolean;
     setOpen: (isOpen: boolean) => void;
 };
