@@ -20,6 +20,10 @@ type BottomSheetProps = {
   fullHeight?: string;
   onClickOutside?: () => void;
   closeOnClickOutside?: boolean;
+  customTransition?: {
+    duration?: number;
+    ease?: [number, number, number, number];
+  };
 };
 
 export const BottomSheet: React.FC<BottomSheetProps> = ({
@@ -32,6 +36,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   fullHeight = "90vh",
   onClickOutside,
   closeOnClickOutside = true,
+  customTransition,
 }) => {
   const componentRef = useRef<HTMLDivElement | null>(null);
   const [height, setHeight] = useState<string>(compactHeight);
@@ -39,8 +44,13 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   const y = useMotionValue(0);
 
   useEffect(() => {
+    animate(
+      y,
+      isOpen ? 0 : parseFloat(compactHeight.replace("vh", "")),
+      customTransition
+    );
     setHeight(isOpen ? fullHeight : compactHeight);
-  }, [isOpen, setHeight, compactHeight, fullHeight]);
+  }, [isOpen, setHeight, compactHeight, fullHeight, y, customTransition]);
 
   useClickOutside([componentRef], () => {
     onClickOutside?.();
@@ -73,6 +83,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         height: height,
         y,
       }}
+      transition={customTransition}
       dragConstraints={{ top: 0, bottom: 0 }}
       onDragEnd={handleDragEnd}
       ref={componentRef}
