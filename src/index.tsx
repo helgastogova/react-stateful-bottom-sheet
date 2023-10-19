@@ -5,7 +5,7 @@ import { useClickOutside } from "./useClickOutside";
 
 import s from "./styles.module.css";
 
-type BottomSheetChildProps = {
+export type BottomSheetChildProps = {
   isOpen: boolean;
   setOpen: (isOpen: boolean) => void;
 };
